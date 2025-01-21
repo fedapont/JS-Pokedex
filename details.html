@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Pokémon</title>
+    <link rel="stylesheet" href="/assets/css/global.css">
+    <link rel="stylesheet" href="/assets/css/pokedex.css">
+</head>
+
+<body>
+    <section class="content">
+        <h1>Detalhes do Pokémon</h1>
+        <div id="pokemonDetails"></div>
+    </section>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const pokemonName = urlParams.get('name');
+
+        if (pokemonName) {
+            const pokemonUrl = `https://pokeapi.co/api/v2/pokemon/${pokemonName}`;
+
+            fetch(pokemonUrl)
+                .then((response) => response.json())
+                .then((pokemon) => {
+                    const speciesUrl = pokemon.species.url; // URL para obter informações da espécie
+
+                    // Fetch adicional para obter gênero e evolução
+                    return fetch(speciesUrl)
+                        .then((response) => response.json())
+                        .then((species) => {
+                            const evolutionUrl = species.evolution_chain.url; // URL da cadeia de evolução
+                            const genderRate = species.gender_rate;
+
+                            // Fetch da cadeia de evolução
+                            return fetch(evolutionUrl)
+                                .then((response) => response.json())
+                                .then((evolutionChain) => ({
+                                    pokemon,
+                                    genderRate,
+                                    evolutionChain,
+                                }));
+                        });
+                })
+                .then(({ pokemon, genderRate, evolutionChain }) => {
+                    const pokemonDetails = document.getElementById('pokemonDetails');
+
+                    // Determinar os gêneros com base no gender_rate
+                    let gender = 'Desconhecido';
+                    if (genderRate >= 0) {
+                        const femaleChance = genderRate / 8 * 100;
+                        const maleChance = 100 - femaleChance;
+                        gender = `Macho: ${maleChance}%, Fêmea: ${femaleChance}%`;
+                    }
+
+                    // Processar a cadeia de evolução
+                    const evolutions = [];
+                    let currentEvolution = evolutionChain.chain;
+                    while (currentEvolution) {
+                        evolutions.push(currentEvolution.species.name);
+                        currentEvolution = currentEvolution.evolves_to[0];
+                    }
+
+                    pokemonDetails.innerHTML = `
+                        <div class="pokemon ${pokemon.types[0].type.name}">
+                            <h2>${pokemon.name}</h2>
+                            <img src="${pokemon.sprites.other['official-artwork'].front_default}" alt="${pokemon.name}">
+                            <p><strong>Altura:</strong> ${pokemon.height / 10} m</p>
+                            <p><strong>Peso:</strong> ${pokemon.weight / 10} kg</p>
+                            <p><strong>Gênero:</strong> ${gender}</p>
+                            <h3>Tipos:</h3>
+                            <ul>
+                                ${pokemon.types.map((type) => `<li>${type.type.name}</li>`).join('')}
+                            </ul>
+                            <h3>Evoluções:</h3>
+                            <ul>
+                                ${evolutions.map((evolution) => `<li>${evolution}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                })
+                .catch((error) => {
+                    console.error(error);
+                    document.getElementById('pokemonDetails').innerHTML = `<p>Erro ao carregar os detalhes do Pokémon.</p>`;
+                });
+        } else {
+            document.getElementById('pokemonDetails').innerHTML = `<p>Nenhum Pokémon selecionado.</p>`;
+        }
+    </script>
+</body>
+
+</html>

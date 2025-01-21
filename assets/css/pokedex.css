@@ -144,7 +144,23 @@
     background-color: #6c79db;
     border: none;
     border-radius: 1rem;
+    transition: background-color 0.5 ease;
+    cursor: pointer;
 }
+
+.pagination button:hover {
+    background-color: #4958a9; /* Cor mais escura para o hover */
+    transform: scale(1.1); /* Aumenta ligeiramente o botão */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+.pokemon a.pokemon-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 
 @media screen and (min-width: 380px) {
     .pokemons {
